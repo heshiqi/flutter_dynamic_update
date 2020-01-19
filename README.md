@@ -33,10 +33,11 @@ app项目实现检查是否需要动态更新Flutter应用
 new DynamicUpdateExtractor(dataDirPath,sourceFilePath,flutterSoEntity,updateListener)
                            .start();
                            
-参数介绍：
-dataDirPath：应用安装目录，这里定义的是/data/user/0/packagename/app_jniLibs
-sourceFilePath：最新的Flutter so文件绝对路径
-flutterSoEntity：Flutter更新包的信息
+参数介绍
+dataDirPath：应用安装目录，这里定义的是/data/user/0/packagename/app_jniLibs  
+sourceFilePath：最新的Flutter so文件绝对路径  
+flutterSoEntity：Flutter更新包的信息  
+
     public class FlutterSoEntity {
         public int appVersion;//应用的版本号
         @NonNull
@@ -49,8 +50,8 @@ flutterSoEntity：Flutter更新包的信息
         public long lastUpdateTime;//最后更新的时间
         @NonNull
         public String fileMd5;//file 文件 md5 签名，保证文件的完整性
-    }
-updateListener:更新包更新状态回调事件
+    }  
+updateListener:更新包更新状态回调事件。  
 
 ## step 5
 安装完成后杀进程，重新打开完成更新应用
