@@ -13,13 +13,13 @@ This project is a starting point for a Flutter application.
 ## step 1：
 Application继承dynamic_update库中的BaseApplication类
 
-public class MyApplication extends BaseApplication {
+    public class MyApplication extends BaseApplication {
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+        @Override
+        public void onCreate() {
+            super.onCreate();
+        }
     }
-}
 
 ## step 2
 app项目实现检查是否需要动态更新Flutter应用
@@ -30,7 +30,7 @@ app项目实现检查是否需要动态更新Flutter应用
 ## step 4
 然后调用 DynamicUpdateExtractor安装最新的Flutter so库
 
-new DynamicUpdateExtractor(dataDirPath,sourceFilePath,flutterSoEntity,updateListener)
+    new DynamicUpdateExtractor(dataDirPath,sourceFilePath,flutterSoEntity,updateListener)
                            .start();
                            
 参数介绍
