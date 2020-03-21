@@ -2,7 +2,7 @@ package com.hsq.flutter.dynamicupdate;
 
 import android.content.Context;
 
-import com.hsq.flutter.dynamicupdate.util.FileUtils;
+import com.hsq.flutter.dynamicupdate.utils.FileUtils;
 
 import java.io.File;
 import java.util.List;
@@ -10,6 +10,7 @@ import java.util.List;
 /**
  * Created by heshiqi on 20/01/16.
  * 动态更新执行类
+ * @deprecated
  */
 public class DynamicUpdateManager {
 
@@ -19,7 +20,7 @@ public class DynamicUpdateManager {
      * @param context
      * @param fromFilePath 所要安装的so文件路径 安装完成后删除
      */
-    public static boolean installNewFlutterSo(Context context, String fromFilePath) {
+     static boolean installNewFlutterSo(Context context, String fromFilePath) {
         File srcfile = FileUtils.getFileByPath(fromFilePath);
         if (srcfile == null) {
             return false;
@@ -34,7 +35,7 @@ public class DynamicUpdateManager {
     /**
      * 判断 so 文件是否存在
      */
-    public static boolean isLoadSoFile(File dir, File srcFile) {
+     static boolean isLoadSoFile(File dir, File srcFile) {
         File[] currentFiles = dir.listFiles();
         boolean hasSoLib = false;
         if (currentFiles == null) {
@@ -54,7 +55,7 @@ public class DynamicUpdateManager {
      *
      * @return
      */
-    public static boolean deleteAppLibsOldSo(Context context,File newFile) {
+     static boolean deleteAppLibsOldSo(Context context,File newFile) {
         File dir = FileUtils.getLibsFile(context, Constants.APP_JNI_LIBS_FILE_NAME);
         List<File> currentFiles = FileUtils.listFilesInDir(dir);
         for (File file:currentFiles){

@@ -13,9 +13,15 @@ import android.view.WindowManager;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.hsq.flutter.dynamicupdate.util.FileUtils;
+import com.hsq.flutter.dynamicupdate.DynamicUpdateExtractor;
+import com.hsq.flutter.dynamicupdate.entities.FlutterSoEntity;
+import com.hsq.flutter.dynamicupdate.utils.FileUtils;
+import com.hsq.flutter.dynamicupdate.utils.ThreadPool;
+import com.hsq.flutter.dynamicupdate.utils.Utils;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,8 +32,8 @@ import io.flutter.util.PathUtils;
 import io.flutter.view.VsyncWaiter;
 
 /**
- *  Created by heshiqi on 20/01/16.
- *  自定义的Flutter加载器，实现动态替换加载路径
+ * Created by heshiqi on 20/01/16.
+ * 自定义的Flutter加载器，实现动态替换加载路径
  */
 public class CustomFlutterLoader extends FlutterLoader {
     // Must match values in flutter::switches
@@ -147,7 +153,7 @@ public class CustomFlutterLoader extends FlutterLoader {
             if (args != null) {
                 Collections.addAll(shellArgs, args);
             }
-
+            loadNewFlutterSo(applicationContext);
             String kernelPath = null;
             if (io.flutter.BuildConfig.DEBUG || io.flutter.BuildConfig.JIT_RELEASE) {
                 String snapshotAssetPath = PathUtils.getDataDirectory(applicationContext) + File.separator + flutterAssetsDir;
@@ -156,35 +162,27 @@ public class CustomFlutterLoader extends FlutterLoader {
                 shellArgs.add("--" + VM_SNAPSHOT_DATA_KEY + "=" + vmSnapshotData);
                 shellArgs.add("--" + ISOLATE_SNAPSHOT_DATA_KEY + "=" + isolateSnapshotData);
             } else {
-                String nowAotLibraryName=aotSharedLibraryName;
-                String applibPath = applicationInfo.nativeLibraryDir + File.separator + aotSharedLibraryName;
-                File dir = applicationContext.getDir("jniLibs", Context.MODE_PRIVATE);
-                List<File> files = FileUtils.listFilesInDir(dir, (o1, o2) -> {
-                    if (o1.isDirectory() && o2.isFile())
-                        return -1;
-                    if (o1.isFile() && o2.isDirectory())
-                        return 1;
-                    return o1.getName().compareTo(o2.getName());
-                });
-                if(!files.isEmpty()){
-                    File file=files.get(files.size()-1);
-                    nowAotLibraryName=file.getName();
-                    applibPath=file.getAbsolutePath();
+                String nowAotLibraryName = aotSharedLibraryName;
+                String nowAotLibraryPath = applicationInfo.nativeLibraryDir + File.separator + aotSharedLibraryName;
+                String[] flutterSoInfo=loadNewFlutterSo(applicationContext);
+                if(flutterSoInfo!=null){
+                    nowAotLibraryPath =  flutterSoInfo[0];
+                    nowAotLibraryName = flutterSoInfo[1];
                 }
+
                 shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + nowAotLibraryName);
 
                 // Most devices can load the AOT shared library based on the library name
                 // with no directory path.  Provide a fully qualified path to the library
                 // as a workaround for devices where that fails.
 
-                shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + applibPath);
+                shellArgs.add("--" + AOT_SHARED_LIBRARY_NAME + "=" + nowAotLibraryPath);
             }
 
             shellArgs.add("--cache-dir-path=" + PathUtils.getCacheDirectory(applicationContext));
             if (settings.getLogTag() != null) {
                 shellArgs.add("--log-tag=" + settings.getLogTag());
             }
-
             String appStoragePath = PathUtils.getFilesDir(applicationContext);
             String engineCachesPath = PathUtils.getCacheDirectory(applicationContext);
             FlutterJNI.nativeInit(applicationContext, shellArgs.toArray(new String[0]),
@@ -195,6 +193,38 @@ public class CustomFlutterLoader extends FlutterLoader {
             throw new RuntimeException(e);
         }
     }
+
+    private String[] loadNewFlutterSo(Context context) throws IOException {
+        String[] result=null;
+        final File dir = context.getDir("jniLibs", Context.MODE_PRIVATE);
+        List<File> files = FileUtils.listFilesInDirWithFilter(dir, pathname -> pathname.getName().startsWith(FileUtils.TIMESTAMP_PREFIX), (o1, o2) -> {
+            if (o1.isDirectory() && o2.isFile())
+                return -1;
+            if (o1.isFile() && o2.isDirectory())
+                return 1;
+            return o2.getName().compareTo(o1.getName());
+        });
+        if (!files.isEmpty()) {
+            //获取最新的Flutter so
+            File file = files.get(0);
+            FlutterSoEntity entity = DynamicUpdateExtractor.readSoInfo(file);
+            String flutterSoPath = FileUtils.generateSoFileName(entity);
+            File soFile = new File(dir,flutterSoPath);
+            if (soFile.exists() && Utils.getFileMD5(soFile).equals(entity.fileMd5)) {
+                result=new String[2];
+                result[0]=soFile.getAbsolutePath();
+                result[1]=soFile.getName();
+                ThreadPool.getInstance().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        DynamicUpdateExtractor.deleteOtherFlutterSoFile(dir.getAbsolutePath(),entity);
+                    }
+                });
+            }
+        }
+        return result;
+    }
+
 
     /**
      * Same as {@link #ensureInitializationComplete(Context, String[])} but waiting on a background

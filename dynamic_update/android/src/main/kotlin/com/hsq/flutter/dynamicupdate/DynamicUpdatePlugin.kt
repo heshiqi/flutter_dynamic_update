@@ -1,22 +1,17 @@
 package com.hsq.flutter.dynamicupdate
 
-import android.Manifest
-import android.app.Activity
-import android.content.pm.PackageManager
-import android.os.Build
+import android.util.Log
 import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat
-import com.hsq.flutter.dynamicupdate.util.FileUtils
+import com.hsq.flutter.dynamicupdate.entities.FlutterSoEntity
+import com.hsq.flutter.dynamicupdate.utils.FileUtils
+import com.hsq.flutter.dynamicupdate.utils.Utils
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.File
-import java.lang.ref.WeakReference
-import java.util.*
 import kotlin.collections.HashMap
 
 /** DynamicUpdatePlugin */
@@ -26,6 +21,7 @@ class DynamicUpdatePlugin : FlutterPlugin, MethodCallHandler {
         val channel = MethodChannel(flutterPluginBinding.getFlutterEngine().getDartExecutor(), "dynamic_update")
         channel.setMethodCallHandler(DynamicUpdatePlugin());
     }
+
     companion object {
         @JvmStatic
         fun registerWith(registrar: Registrar) {
@@ -36,15 +32,36 @@ class DynamicUpdatePlugin : FlutterPlugin, MethodCallHandler {
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         if (call.method == "dynamicUpdate") {
-            val results = HashMap<String, Any>()
-            var resultMsg="";
-            if(DynamicUpdateManager.installNewFlutterSo(BaseApplication.instance,FileUtils.getFlutterLibPath()+File.separator+"libapp100.so")){
-                results.put("success",true);
-                resultMsg="插件更新成功,请杀进程重新启动";
-            }else{
-                resultMsg="插件更新失败";
-            }
-            result.success(resultMsg)
+            val soEntity = FlutterSoEntity();
+            soEntity.appVersion = 100;
+            soEntity.pluginSoVersion = 100;
+            soEntity.appName = "flutterdemo"
+            soEntity.ABIName = "arm64"
+            soEntity.lastUpdateTime = System.currentTimeMillis();
+            soEntity.fileMd5=Utils.getFileMD5(File(FileUtils.getFlutterLibPath() + File.separator + "libapp100.so"))
+            val dirDataPath = FileUtils.getLibsFile(BaseApplication.instance, Constants.APP_JNI_LIBS_FILE_NAME)
+            DynamicUpdateExtractor(dirDataPath.absolutePath,
+                    FileUtils.getFlutterLibPath() + File.separator + "libapp100.so",
+                    soEntity,
+                    object :DynamicUpdateExtractor.OnUpdateListener{
+                        /**
+                         * 动态更新成功
+                         * @param code
+                         * @param msg
+                         */
+                        override fun onInstallSuccess(code: Int, msg: String){
+                            result.success("插件更新成功,请杀进程重新启动")
+                        }
+
+                        /**
+                         * 动态更新失败
+                         * @param code
+                         * @param msg
+                         */
+                        override fun onInstallFail(code: Int, msg: String){
+                            result.success("插件更新失败")
+                        }
+                    }).start()
         } else {
 
             result.notImplemented()

@@ -1,9 +1,10 @@
-package com.hsq.flutter.dynamicupdate.util;
+package com.hsq.flutter.dynamicupdate.utils;
 
 import android.content.Context;
 import android.os.Environment;
 
 import com.hsq.flutter.dynamicupdate.Constants;
+import com.hsq.flutter.dynamicupdate.entities.FlutterSoEntity;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -11,6 +12,7 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -19,10 +21,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.hsq.flutter.dynamicupdate.Constants.ROOT_DIRECTORY_NAME;
-
 public class FileUtils {
 
+    public static final String TIMESTAMP_PREFIX = "res_timestamp-";
+    public static final String LIB_PREFIX = "lib";
+    public static final String LIB_SUFFIX = ".so";
 
     /**
      * Return the files in directory.
@@ -55,7 +58,7 @@ public class FileUtils {
      * @return the files in directory
      */
     public static List<File> listFilesInDir(final String dirPath, Comparator<File> comparator) {
-        return listFilesInDir(getFileByPath(dirPath), false,comparator);
+        return listFilesInDir(getFileByPath(dirPath), false, comparator);
     }
 
     /**
@@ -538,6 +541,7 @@ public class FileUtils {
 
     /**
      * 获取sd卡跟目录
+     *
      * @return
      */
     public static String getRootDirectoryPath() {
@@ -547,10 +551,30 @@ public class FileUtils {
     }
 
     public static String getFlutterLibPath() {
-        String rootPath=getRootDirectoryPath();
-        if(rootPath==null){
+        String rootPath = getRootDirectoryPath();
+        if (rootPath == null) {
             return null;
         }
-        return rootPath+File.separator+ Constants.APP_JNI_LIBS_FILE_NAME;
+        return rootPath + File.separator + Constants.APP_JNI_LIBS_FILE_NAME;
+    }
+
+    /**
+     * 生成Flutter so 文件名
+     *
+     * @param entity
+     * @return
+     */
+    public static String generateSoFileName(FlutterSoEntity entity) {
+        return LIB_PREFIX + entity.appName + "-" + entity.appVersion + "-" + entity.pluginSoVersion + LIB_SUFFIX;
+    }
+
+    /**
+     * 生成Flutter so 描述信息文件名
+     *
+     * @param entity
+     * @return
+     */
+    public static String generateTimestampFileName(FlutterSoEntity entity) {
+        return TIMESTAMP_PREFIX + entity.appVersion + "-" + entity.pluginSoVersion;
     }
 }

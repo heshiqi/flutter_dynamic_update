@@ -2,15 +2,8 @@ package com.hsq.flutter.dynamicupdate;
 
 import android.app.Application;
 import android.content.Context;
-import android.util.Log;
 
-import com.hsq.flutter.dynamicupdate.util.FileUtils;
-
-import java.io.File;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 import io.flutter.app.FlutterApplication;
 import io.flutter.embedding.engine.loader.CustomFlutterLoader;

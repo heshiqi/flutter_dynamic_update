@@ -2,11 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dynamic_update/publish.dart';
+import 'package:flutter_dynamic_update/attention.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 void main() => runApp(MyApp());
+
+void attention() => runApp(AttentionPage());
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -66,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              'You have pushed the button this many times:',
+              '动态更新测试',
             ),
             Text(
               '$_counter',
